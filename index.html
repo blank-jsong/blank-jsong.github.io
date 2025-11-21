@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dr.Future's Lab | 深度学习 x 植物表型</title>
+    <style>
+        /* --- CSS 样式区 --- */
+        :root {
+            --bg-color: #0d0d16;
+            --card-bg: #1a1a2e;
+            --neon-green: #39ff14;
+            --neon-blue: #00f3ff;
+            --neon-pink: #ff00ff;
+            --text-main: #e0e0e0;
+            --font-tech: 'Courier New', Courier, monospace;
+            --font-cartoon: 'Verdana', sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: var(--font-cartoon);
+            overflow-x: hidden;
+        }
+
+        /* 动态背景网格 */
+        .bg-grid {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image:
+                linear-gradient(rgba(0, 243, 255, 0.1) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 243, 255, 0.1) 1px, transparent 1px);
+            background-size: 50px 50px;
+            z-index: -1;
+            perspective: 500px;
+        }
+
+        /* 导航栏 */
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 50px;
+            border-bottom: 3px solid var(--neon-blue);
+            background: rgba(13, 13, 22, 0.9);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo {
+            font-family: var(--font-tech);
+            font-size: 1.5rem;
+            color: var(--neon-green);
+            text-shadow: 0 0 10px var(--neon-green);
+        }
+
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            margin-left: 20px;
+            font-weight: bold;
+            transition: 0.3s;
+        }
+
+        .nav-links a:hover {
+            color: var(--neon-pink);
+        }
+
+        /* Hero 区域 */
+        header {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 80vh;
+            text-align: center;
+            position: relative;
+        }
+
+        .avatar-container {
+            width: 180px;
+            height: 180px;
+            border: 4px solid var(--neon-green);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #000;
+            box-shadow: 0 0 20px var(--neon-green);
+            margin-bottom: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .avatar-emoji {
+            font-size: 100px;
+            z-index: 1;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        /* 扫描动画 */
+        .scanner {
+            position: absolute;
+            width: 100%;
+            height: 4px;
+            background: var(--neon-blue);
+            box-shadow: 0 0 10px var(--neon-blue);
+            animation: scan 2s linear infinite;
+            top: 0;
+        }
+
+        h1 {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            font-family: var(--font-tech);
+        }
+
+        .tagline {
+            font-size: 1.2rem;
+            color: var(--neon-blue);
+            background: rgba(0, 243, 255, 0.1);
+            padding: 5px 15px;
+            border-radius: 15px;
+            border: 1px dashed var(--neon-blue);
+        }
+
+        /* 内容区块通用 */
+        section {
+            padding: 60px 20px;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .section-title {
+            font-size: 2rem;
+            border-left: 10px solid var(--neon-pink);
+            padding-left: 15px;
+            margin-bottom: 40px;
+            font-family: var(--font-tech);
+            text-transform: uppercase;
+        }
+
+        /* 关于我 - 命令行风格 */
+        .terminal {
+            background: #000;
+            border: 2px solid var(--text-main);
+            border-radius: 10px;
+            padding: 20px;
+            font-family: var(--font-tech);
+            box-shadow: 10px 10px 0px var(--neon-green);
+        }
+
+        .cmd-line::before {
+            content: "> ";
+            color: var(--neon-green);
+        }
+
+        .highlight {
+            color: var(--neon-blue);
+        }
+
+        /* 研究项目 - 卡片网格 */
+        .project-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 30px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 2px solid var(--neon-blue);
+            border-radius: 20px;
+            padding: 20px;
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card:hover {
+            transform: translateY(-10px) scale(1.02);
+            box-shadow: 0 10px 30px rgba(0, 243, 255, 0.3);
+            border-color: var(--neon-pink);
+        }
+
+        .card-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            display: block;
+        }
+
+        .card h3 {
+            margin-bottom: 10px;
+            color: var(--neon-green);
+        }
+
+        .tags span {
+            display: inline-block;
+            font-size: 0.8rem;
+            background: #333;
+            padding: 2px 8px;
+            border-radius: 5px;
+            margin-right: 5px;
+            margin-top: 10px;
+            font-family: var(--font-tech);
+        }
+
+        /* 页脚 */
+        footer {
+            text-align: center;
+            padding: 40px;
+            border-top: 1px solid #333;
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .social-links a {
+            font-size: 1.5rem;
+            margin: 0 10px;
+            text-decoration: none;
+        }
+
+        /* 动画定义 */
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-10px);
+            }
+        }
+
+        @keyframes scan {
+            0% {
+                top: 0;
+                opacity: 0;
+            }
+
+            10% {
+                opacity: 1;
+            }
+
+            90% {
+                opacity: 1;
+            }
+
+            100% {
+                top: 100%;
+                opacity: 0;
+            }
+        }
+
+        /* 移动端适配 */
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 2rem;
+            }
+
+            nav {
+                padding: 15px;
+            }
+
+            .project-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- 背景 -->
+    <div class="bg-grid"></div>
+
+    <!-- 导航 -->
+    <nav>
+        <div class="logo">🌱 AI_Botanist</div>
+        <div class="nav-links">
+            <a href="#about">数据</a>
+            <a href="#research">研究</a>
+            <a href="#contact">信号</a>
+        </div>
+    </nav>
+
+    <!-- 主视觉区 -->
+    <header>
+        <div class="avatar-container">
+            <!-- 这里用Emoji代替头像，你可以换成你的照片 -->
+            <div class="avatar-emoji">🤖</div>
+            <div class="scanner"></div>
+        </div>
+        <h1>你好，我是 <span style="color:var(--neon-green)">[宋键]</span></h1>
+        <p class="tagline">深度学习工程师 / 植物表型组学博士生</p>
+        <p style="margin-top: 15px; font-family: var(--font-tech); color: #888;">正在解码大自然的算法...</p>
+    </header>
+
+    <!-- 关于我 -->
+    <section id="about">
+        <h2 class="section-title">01. 训练数据 (About)</h2>
+        <div class="terminal">
+            <p class="cmd-line">python load_profile.py</p>
+            <br>
+            <p>> <span class="highlight">Name:</span> YOUR_NAME_HERE</p>
+            <p>> <span class="highlight">Role:</span> PhD Candidate</p>
+            <p>> <span class="highlight">Focus:</span> Computer Vision, Plant Phenotyping, 3D Reconstruction</p>
+            <p>> <span class="highlight">Status:</span> Writing Paper... ☕</p>
+            <br>
+            <p class="cmd-line">print(mission)</p>
+            <p>> "利用人工智能技术，实现植物生长过程的高通量、非破坏性监测，为智慧农业提供视觉大脑。"</p>
+        </div>
+    </section>
+
+    <!-- 研究项目 -->
+    <section id="research">
+        <h2 class="section-title">02. 神经网络 (Projects)</h2>
+        <div class="project-grid">
+
+            <!-- 项目卡片 1 -->
+            <div class="card">
+                <span class="card-icon">🌾</span>
+                <h3>作物病害智能识别</h3>
+                <p>基于改进的 CNN 模型，在田间复杂背景下实现小麦条锈病的早期检测。准确率达到 98.5%。</p>
+                <div class="tags">
+                    <span>#PyTorch</span>
+                    <span>#ComputerVision</span>
+                    <span>#Wheat</span>
+                </div>
+            </div>
+
+            <!-- 项目卡片 2 -->
+            <div class="card">
+                <span class="card-icon">🧬</span>
+                <h3>三维根系表型重建</h3>
+                <p>利用点云数据处理技术，重建植物根系的 3D 拓扑结构，分析根系构型与抗旱性的关系。</p>
+                <div class="tags">
+                    <span>#3D-Vision</span>
+                    <span>#PointNet</span>
+                    <span>#Roots</span>
+                </div>
+            </div>
+
+            <!-- 项目卡片 3 -->
+            <div class="card">
+                <span class="card-icon">🛰️</span>
+                <h3>无人机高光谱分析</h3>
+                <p>结合无人机遥感与深度学习，进行大田尺度的叶绿素含量反演与产量预测。</p>
+                <div class="tags">
+                    <span>#RemoteSensing</span>
+                    <span>#Hyperspectral</span>
+                    <span>#UAV</span>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- 出版物 (可选) -->
+    <section id="publications">
+        <h2 class="section-title">03. 输出日志 (Papers)</h2>
+        <ul style="list-style: none; font-family: var(--font-tech);">
+            <li style="margin-bottom: 15px; border-bottom: 1px dashed #333; padding-bottom: 10px;">
+                <span style="color: var(--neon-pink)">[CVPR 2024]</span>
+                Real-time Plant Segmentation in the Wild.
+                <a href="#" style="color: var(--neon-blue)">[PDF]</a>
+            </li>
+            <li style="margin-bottom: 15px; border-bottom: 1px dashed #333; padding-bottom: 10px;">
+                <span style="color: var(--neon-green)">[Plant Journal]</span>
+                Deep Phenotyping: A Review.
+                <a href="#" style="color: var(--neon-blue)">[PDF]</a>
+            </li>
+        </ul>
+    </section>
+
+    <!-- 联系方式 -->
+    <section id="contact" style="text-align: center;">
+        <h2 class="section-title" style="display: inline-block; border: none;">04. 建立连接 (Contact)</h2>
+        <p style="margin-bottom: 30px;">想讨论 AI + Agriculture？给我发个信号吧。</p>
+
+        <div class="social-links">
+            <a href="mailto:your.email@edu.cn" title="Email">📧</a>
+            <a href="https://github.com" title="GitHub">🐙</a>
+            <a href="https://scholar.google.com" title="Google Scholar">🎓</a>
+            <a href="#" title="Twitter/X">🐦</a>
+        </div>
+
+        <br><br>
+        <a href="mailto:your.email@edu.cn"
+            style="background: var(--neon-green); color: #000; padding: 15px 30px; text-decoration: none; font-weight: bold; border-radius: 50px; display: inline-block; transition: 0.3s;">
+            SEND PACKET
+        </a>
+    </section>
+
+    <footer>
+        <p>&copy; 2024 Built by Dr.Future with 💻 & 🌿</p>
+    </footer>
+
+    <script>
+        // 简单的交互：点击导航平滑滚动
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+        });
+
+        // 简单的彩蛋：控制台输出
+        console.log("%c 🌱 System Ready: Plant Phenotyping Matrix Loaded.", "color: #39ff14; font-size: 16px; background: #000");
+    </script>
+</body>
+
+</html>
